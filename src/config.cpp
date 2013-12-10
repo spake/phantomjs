@@ -72,6 +72,7 @@ static const struct QCommandLineConfigEntry flags[] =
     { QCommandLine::Option, '\0', "webdriver-logfile", "File where to write the WebDriver's Log (default 'none') (NOTE: needs '--webdriver') ", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "webdriver-loglevel", "WebDriver Logging Level: (supported: 'ERROR', 'WARN', 'INFO', 'DEBUG') (default 'INFO') (NOTE: needs '--webdriver') ", QCommandLine::Optional },
     { QCommandLine::Option, '\0', "webdriver-selenium-grid-hub", "URL to the Selenium Grid HUB: 'URL_TO_HUB' (default 'none') (NOTE: needs '--webdriver') ", QCommandLine::Optional },
+    { QCommandLine::Option, '\0', "webdriver-keep-alive", "Enables Keep-Alive the WebDriver", QCommandLine::Optional },
     { QCommandLine::Param, '\0', "script", "Script", QCommandLine::Flags(QCommandLine::Optional|QCommandLine::ParameterFence)},
     { QCommandLine::Param, '\0', "argument", "Script argument", QCommandLine::OptionalMultiple },
     { QCommandLine::Switch, 'w', "wd", "Equivalent to '--webdriver' option above", QCommandLine::Optional },
@@ -133,6 +134,12 @@ void Config::processArgs(const QStringList &args)
         }
 
         argsForGhostDriver << QString("--logLevel=%1").arg(m_webdriverLogLevel);    //< "--logLevel=LOG_LEVEL"
+
+        if (m_webdriverKeepAlive) {
+            argsForGhostDriver << "--keepAlive=true";
+        } else {
+            argsForGhostDriver << "--keepAlive=false";
+        }
 
         // Clear current args and override with those
         setScriptArgs(argsForGhostDriver);
@@ -509,6 +516,16 @@ QString Config::webdriverSeleniumGridHub() const
     return m_webdriverSeleniumGridHub;
 }
 
+void Config::setWebdriverKeepAlive(const bool value)
+{
+    m_webdriverKeepAlive = value;
+}
+
+bool Config::webdriverKeepAlive() const
+{
+    return m_webdriverKeepAlive;
+}
+
 // private:
 void Config::resetToDefaults()
 {
@@ -546,6 +563,7 @@ void Config::resetToDefaults()
     m_webdriverLogFile = QString();
     m_webdriverLogLevel = "INFO";
     m_webdriverSeleniumGridHub = QString();
+    m_webdriverKeepAlive = false;
 }
 
 void Config::setProxyAuthPass(const QString &value)
@@ -610,6 +628,7 @@ void Config::handleOption(const QString &option, const QVariant &value)
     booleanFlags << "local-to-remote-url-access";
     booleanFlags << "remote-debugger-autorun";
     booleanFlags << "web-security";
+    booleanFlags << "webdriver-keep-alive";
     if (booleanFlags.contains(option)) {
         if ((value != "true") && (value != "yes") && (value != "false") && (value != "no")) {
             setUnknownOption(QString("Invalid values for '%1' option.").arg(option));
@@ -707,6 +726,9 @@ void Config::handleOption(const QString &option, const QVariant &value)
     }
     if (option == "webdriver-selenium-grid-hub") {
         setWebdriverSeleniumGridHub(value.toString());
+    }
+    if (option == "webdriver-keep-alive") {
+        setWebdriverKeepAlive(boolValue);
     }
 }
 
